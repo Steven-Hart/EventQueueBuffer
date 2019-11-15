@@ -6,14 +6,18 @@
       <e p="Assets" t="Include">
         <e p="Block.cs" t="Include" />
         <e p="ImageSlicer.cs" t="Include" />
+        <e p="Player.cs" t="Include" />
         <e p="Puzzle.cs" t="Include" />
       </e>
-      <e p="Buffer Puzzle.sln" t="IncludeFlat" />
+      <e p="EventQueueBuffer.sln" t="IncludeFlat" />
+      <e p="Library" t="ExcludeRecursive" />
       <e p="obj" t="ExcludeRecursive" />
       <e p="packages" t="ExcludeRecursive" />
-      <e p="Temp\bin" t="ExcludeRecursive" />
+      <e p="Temp" t="ExcludeRecursive">
+        <e p="bin" t="ExcludeRecursive" />
+      </e>
     </e>
-    <e p="C:\Users\Mereslann\.Rider2019.2\system\extResources" t="IncludeRecursive" />
-    <e p="C:\Users\Mereslann\.Rider2019.2\system\resharper-host\local\Transient\ReSharperHost\v192\SolutionCaches\_Buffer Puzzle.-1606943129.00" t="ExcludeRecursive" />
+    <e p="C:\Users\Mereslann\.Rider2018.3\system\extResources" t="IncludeRecursive" />
+    <e p="C:\Users\Mereslann\.Rider2018.3\system\resharper-host\local\Transient\ReSharperHost\v183\SolutionCaches\_EventQueueBuffer.-1318820292.00" t="ExcludeRecursive" />
   </component>
 </project>

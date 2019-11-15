@@ -1,23 +1,33 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using System.Numerics;
+using System.Xml.Schema;
 using UnityEngine;
+using UnityEngine.XR;
 using Vector2 = UnityEngine.Vector2;
 
 public class Puzzle : MonoBehaviour
 {
     public Texture2D image;
+    public ParticleSystem particles;
     public int blocksPerLine = 4;
     public int suffleLength = 20;
     public float defaultMoveDuration = .2f;
     public float shuffleMoveDuration = .1f;
     
+    public Player player;
+
+    
     private Block emptyBlock;
     private Block[,] blocks;
     private bool blockIsMoving;
-    private Queue<Block> inputs;
     private int suffleMovesRemaining;
     private Vector2Int prevSuffleOffset;
+    
+    private Queue<Block> inputs;
+    private Stack<Block> reverseInputs;
+
+
 
     private void Start()
     {
@@ -29,6 +39,10 @@ public class Puzzle : MonoBehaviour
         if (Input.GetKeyDown(KeyCode.Space))
         {
             StartSuffle();
+        }
+        if (Input.GetKey(KeyCode.X))
+        {
+            Reverse();
         }
         
     }
@@ -46,9 +60,9 @@ public class Puzzle : MonoBehaviour
                 blockObject.transform.parent = transform;
 
                 Block block = blockObject.AddComponent<Block>();
-                block.OnBlockPressed += PlayerMoveBlockInput;
+                block.OnBlockPressed += player.PlayerMoveBlockInput;
                 block.OnFinishedMoving += OnBlockFinishedMoving;
-                block.Init(new Vector2Int(x,y), imageSlices[x,y]);
+                block.Init(new Vector2Int(x,y), imageSlices[x,y], particles);
                 blocks[x, y] = block;
 
                 if (y == 0 && x == blocksPerLine - 1)
@@ -61,21 +75,62 @@ public class Puzzle : MonoBehaviour
 
         Camera.main.orthographicSize = blocksPerLine * .55f;
         inputs = new Queue<Block>();
+        reverseInputs = new Stack<Block>();
     }
 
-    void PlayerMoveBlockInput(Block blockToMove)
-    {
-        inputs.Enqueue(blockToMove);
-        MakeNextPlayerMove();
-    }
+    
+    
+    // Queue Methods
 
-    void MakeNextPlayerMove()
+    public void UndoAll()
     {
-        while(inputs.Count > 0 && !blockIsMoving)
+        while(inputs.Count > 0)
         {
-            MoveBlock(inputs.Dequeue(), defaultMoveDuration);
+            inputs.Dequeue()._particles.Stop();
         }
     }
+    
+
+    public void AddInput(Block block)
+    {
+        inputs.Enqueue(block);
+    }
+    
+    void Reverse()
+    {
+        while(reverseInputs.Count > 0 && !blockIsMoving)
+        {
+            MoveBlock(reverseInputs.Pop(), shuffleMoveDuration);
+        }
+    }
+    
+    //Player and Shuffle Input Handler
+
+    public void MakeNextMove(string s)
+    {
+        if (s == "shuffle")
+        {
+            FindNextShuffleMove();
+            while(inputs.Count > 0 && !blockIsMoving)
+            {
+                Block temp = inputs.Dequeue();
+                reverseInputs.Push(temp);
+                MoveBlock(temp, shuffleMoveDuration);
+            }
+        }
+        else
+        {
+            while(inputs.Count > 0 && !blockIsMoving)
+            {
+                Block temp = inputs.Dequeue();
+                temp._particles.Stop();
+                reverseInputs.Push(temp);
+                MoveBlock(temp, defaultMoveDuration);
+            }
+        }
+    }
+    
+    //Move Block Methods
     
     void MoveBlock(Block blockToMove, float duration)
     {
@@ -98,21 +153,25 @@ public class Puzzle : MonoBehaviour
     void OnBlockFinishedMoving()
     {
         blockIsMoving = false;
-        MakeNextPlayerMove();
+        MakeNextMove("player");
 
         if (suffleMovesRemaining > 0)
         {
-            MakeNextSuffleMove();
+            MakeNextMove("shuffle");
         }
     }
 
+    // Shuffle Methods
+    
     void StartSuffle()
     {
         suffleMovesRemaining = suffleLength;
-        MakeNextSuffleMove();
+        MakeNextMove("shuffle");
     }
 
-    void MakeNextSuffleMove()
+    
+
+    void FindNextShuffleMove()
     {
         Vector2Int[] offsets =
             {new Vector2Int(1, 0), new Vector2Int(-1, 0), new Vector2Int(0, 1), new Vector2Int(0, -1)};
@@ -128,7 +187,7 @@ public class Puzzle : MonoBehaviour
                 if (moveBlockCoord.x >= 0 && moveBlockCoord.x < blocksPerLine && moveBlockCoord.y >= 0 &&
                     moveBlockCoord.y < blocksPerLine)
                 {
-                    MoveBlock(blocks[moveBlockCoord.x, moveBlockCoord.y], shuffleMoveDuration);
+                    AddInput(blocks[moveBlockCoord.x, moveBlockCoord.y]);
                     suffleMovesRemaining--;
                     prevSuffleOffset = offset;
                     Debug.Log(suffleMovesRemaining);
@@ -137,4 +196,6 @@ public class Puzzle : MonoBehaviour
             }
         }
     }
+
+    
 }
